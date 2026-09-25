@@ -1,22 +1,32 @@
-// 1. Seleccionar los elementos del DOM que necesitamos
+// Seleccionar elementos del DOM
 const formTransaccion = document.getElementById('form-transaccion');
 const inputDescripcion = document.getElementById('descripcion');
 const inputMonto = document.getElementById('monto');
 const selectTipo = document.getElementById('tipo');
+const listaTransacciones = document.getElementById('lista-transacciones');
 
-// 2. Escuchar el evento "submit" del formulario
+// Escuchar el evento submit
 formTransaccion.addEventListener('submit', function (e) {
-    // Evitar que el navegador recargue la página por defecto
     e.preventDefault();
 
-    // Capturar los valores ingresados por el usuario
+    // Capturar datos
     const descripcion = inputDescripcion.value;
     const monto = Number(inputMonto.value);
     const tipo = selectTipo.value;
 
-    // Mostrar los datos en la consola de prueba
-    console.log('Nueva Transacción:', { descripcion, monto, tipo });
+    // Crear un nuevo elemento de lista <li> en memoria
+    const nuevaLi = document.createElement('li');
+    nuevaLi.classList.add('transaccion-item', tipo);
 
-    // Limpiar los campos del formulario
+    // Definir el contenido visual dentro del <li>
+    nuevaLi.innerHTML = `
+        <span>${descripcion}</span>
+        <span>${tipo === 'gasto' ? '-' : '+'}$${monto.toFixed(2)}</span>
+    `;
+
+    // Insertar el nuevo elemento dentro de la lista <ul> en la pantalla
+    listaTransacciones.appendChild(nuevaLi);
+
+    // Limpiar el formulario
     formTransaccion.reset();
 });
