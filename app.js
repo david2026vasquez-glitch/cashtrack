@@ -1,5 +1,5 @@
-// 1. Arreglo principal para almacenar los datos en memoria
-let transacciones = [];
+// 1. Cargar datos de LocalStorage o iniciar un arreglo vacío
+let transacciones = JSON.parse(localStorage.getItem('cashtrack_transacciones')) || [];
 
 // 2. Seleccionar elementos del DOM
 const formTransaccion = document.getElementById('form-transaccion');
@@ -12,7 +12,12 @@ const elBalanceTotal = document.getElementById('balance-total');
 const elTotalIngresos = document.getElementById('total-ingresos');
 const elTotalGastos = document.getElementById('total-gastos');
 
-// 3. Función para actualizar los totales en pantalla
+// 3. Función para guardar en LocalStorage
+function guardarEnLocalStorage() {
+    localStorage.setItem('cashtrack_transacciones', JSON.stringify(transacciones));
+}
+
+// 4. Función para actualizar los totales del resumen
 function actualizarResumen() {
     let totalIngresos = 0;
     let totalGastos = 0;
@@ -27,17 +32,52 @@ function actualizarResumen() {
 
     const balanceTotal = totalIngresos - totalGastos;
 
-    // Actualizar los elementos HTML
     elBalanceTotal.textContent = `$${balanceTotal.toFixed(2)}`;
     elTotalIngresos.textContent = `+$${totalIngresos.toFixed(2)}`;
     elTotalGastos.textContent = `-$${totalGastos.toFixed(2)}`;
 }
 
-// 4. Escuchar evento de envío del formulario
+// 5. Función para eliminar una transacción por su ID
+function eliminarTransaccion(id) {
+    // Filtrar el arreglo excluyendo la transacción con ese ID
+    transacciones = transacciones.filter(function (t) {
+        return t.id !== id;
+    });
+
+    // Guardar cambios y volver a renderizar todo
+    guardarEnLocalStorage();
+    renderizarTodo();
+}
+
+// 6. Función para renderizar toda la lista de transacciones en pantalla
+function renderizarTodo() {
+    // Limpiar la lista actual en HTML
+    listaTransacciones.innerHTML = '';
+
+    // Dibujar cada elemento
+    transacciones.forEach(function (nuevaTransaccion) {
+        const nuevaLi = document.createElement('li');
+        nuevaLi.classList.add('transaccion-item', nuevaTransaccion.tipo);
+        
+        nuevaLi.innerHTML = `
+            <span>${nuevaTransaccion.descripcion}</span>
+            <div>
+                <span>${nuevaTransaccion.tipo === 'gasto' ? '-' : '+'}$${nuevaTransaccion.monto.toFixed(2)}</span>
+                <button class="btn-eliminar" onclick="eliminarTransaccion(${nuevaTransaccion.id})">✕</button>
+            </div>
+        `;
+
+        listaTransacciones.appendChild(nuevaLi);
+    });
+
+    // Actualizar los números del resumen
+    actualizarResumen();
+}
+
+// 7. Escuchar el evento submit del formulario
 formTransaccion.addEventListener('submit', function (e) {
     e.preventDefault();
 
-    // Crear el objeto de la transacción
     const nuevaTransaccion = {
         id: Date.now(),
         descripcion: inputDescripcion.value,
@@ -45,22 +85,14 @@ formTransaccion.addEventListener('submit', function (e) {
         tipo: selectTipo.value
     };
 
-    // Agregar al arreglo
     transacciones.push(nuevaTransaccion);
 
-    // Crear elemento en la lista visual
-    const nuevaLi = document.createElement('li');
-    nuevaLi.classList.add('transaccion-item', nuevaTransaccion.tipo);
-    nuevaLi.innerHTML = `
-        <span>${nuevaTransaccion.descripcion}</span>
-        <span>${nuevaTransaccion.tipo === 'gasto' ? '-' : '+'}$${nuevaTransaccion.monto.toFixed(2)}</span>
-    `;
+    // Guardar y renderizar
+    guardarEnLocalStorage();
+    renderizarTodo();
 
-    listaTransacciones.appendChild(nuevaLi);
-
-    // Recalcular los valores del resumen
-    actualizarResumen();
-
-    // Limpiar formulario
     formTransaccion.reset();
 });
+
+// 8. Cargar los datos guardados al abrir la app
+renderizarTodo();
